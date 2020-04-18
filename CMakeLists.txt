@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(DrGBA CXX)
+project(DrGBA C CXX)
 
 # Default to a Release build
 if (NOT CMAKE_BUILD_TYPE)
