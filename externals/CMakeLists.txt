@@ -13,3 +13,7 @@ add_subdirectory(glfw)
 
 # imgui
 add_subdirectory(imgui)
+
+# mp
+add_library(mp INTERFACE)
+target_include_directories(mp INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/mp/include>)
