@@ -1,3 +1,6 @@
+# catch
+add_subdirectory(catch)
+
 # fmt
 add_subdirectory(fmt)
 
