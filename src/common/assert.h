@@ -1,0 +1,68 @@
+// This file is part of the DrGBA project.
+// Copyright (c) 2020 MerryMage
+// SPDX-License-Identifier: 0BSD
+
+#pragma once
+
+#include <fmt/format.h>
+
+#include "common/unlikely.h"
+
+namespace DrGBA {
+
+namespace detail {
+
+[[noreturn]] void Terminate(fmt::string_view msg, fmt::format_args args);
+
+template <typename... Ts>
+[[noreturn]] void TerminateHelper(fmt::string_view msg, Ts... args) {
+    Terminate(msg, fmt::make_format_args(args...));
+}
+
+} // namespace detail
+
+} // namespace DrGBA
+
+#if defined(NDEBUG)
+    #if defined(__clang) || defined(__GNUC__)
+        #define UNREACHABLE() __builtin_unreachable()
+        #define ASSUME(expr) [&]{ if (!(expr)) __builtin_unreachable(); }()
+    #elif defined(_MSC_VER)
+        #define UNREACHABLE() __assume(0)
+        #define ASSUME(expr) __assume(expr)
+    #else
+        #define UNREACHABLE() ASSERT_FALSE("Unreachable code!")
+        #define ASSUME(expr)
+    #endif
+#else
+    #define UNREACHABLE() ASSERT_FALSE("Unreachable code!")
+    #define ASSUME(expr)
+#endif
+
+#ifdef DYNARMIC_IGNORE_ASSERTS
+    #define ASSERT(expr) ASSUME(expr)
+    #define ASSERT_MSG(expr, ...) ASSUME(expr)
+    #define ASSERT_FALSE(...) UNREACHABLE()
+#else
+    #define ASSERT(expr)                                                                        \
+        [&]{                                                                                    \
+            if (UNLIKELY(!(expr))) {                                                            \
+                ::DrGBA::detail::TerminateHelper(#expr);                                        \
+            }                                                                                   \
+        }()
+    #define ASSERT_MSG(expr, ...)                                                               \
+        [&]{                                                                                    \
+            if (UNLIKELY(!(expr))) {                                                            \
+                ::DrGBA::detail::TerminateHelper(#expr "\nMessage: " __VA_ARGS__);              \
+            }                                                                                   \
+        }()
+    #define ASSERT_FALSE(...) ::DrGBA::detail::TerminateHelper("false\nMessage: " __VA_ARGS__);
+#endif
+
+#if defined(NDEBUG) || defined(DYNARMIC_IGNORE_ASSERTS)
+    #define DEBUG_ASSERT(expr) ASSUME(expr)
+    #define DEBUG_ASSERT_MSG(expr, ...) ASSUME(expr)
+#else
+    #define DEBUG_ASSERT(expr) ASSERT(expr)
+    #define DEBUG_ASSERT_MSG(expr, ...) ASSERT_MSG(expr, __VA_ARGS__)
+#endif
